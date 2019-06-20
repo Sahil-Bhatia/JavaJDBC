@@ -1,0 +1,427 @@
+select * from tab; //This command gives list of tables
+
+//DML-insert,update,delete
+//DDL-create,drop,alter
+//TCL- transaction control language --commit,rollback,savepoint
+select //retrieval command
+
+select * from departments;
+select department_id,department_name from departments;
+
+desc employees; //Describe command gives structure of the table
+
+Constraints--- primarykey
+				unique
+				not null
+				check
+				foreign key
+				
+===========================================================================
+create table account
+(
+aid number(8) primary key,
+mobileno number(10) unique not null,
+accountholder varchar2(30) not null,
+balance number(8,2) check (balance>=1000.00) 
+); //balance is 8 digit and 2 digit precision
+
+
+insert into account values(100,9999999999,'King',24000.00);
+
+savepoint A; //Bookmark point
+
+
+insert into account values(101,9999999994,'Raja',50000.00);
+
+insert into account values(102,9999999222,'Ram',33000.00);
+
+
+
+savepoint B; //Bookmark point
+
+update account set balance=30000, accountholder='King Khan'
+where aid=100;
+
+
+=========================================================================
+select * from account;
+delete from account;
+
+rollback to B;
+commit; //save records after commit whatever changes are done are permanent
+
+DDL-create,drop,alter commands do automatic commit
+=========================================================================
+//Error
+
+
+SQL> insert into account values(101,9999999994,'Raja',50000.00);
+insert into account values(101,9999999994,'Raja',50000.00)
+*
+ERROR at line 1:
+ORA-00001: unique constraint (HR.SYS_C007556) violated
+
+
+SQL> insert into account values(null,9999999994,'Raja',50000.00);
+insert into account values(null,9999999994,'Raja',50000.00)
+                           *
+ERROR at line 1:
+ORA-01400: cannot insert NULL into ("HR"."ACCOUNT"."AID")
+
+
+SQL> insert into account values(103,9999999994,'Raja',50000.00);
+insert into account values(103,9999999994,'Raja',50000.00)
+*
+ERROR at line 1:
+ORA-00001: unique constraint (HR.SYS_C007557) violated
+
+
+SQL> insert into account values(103,9999999933,'Raja',500.00);
+insert into account values(103,9999999933,'Raja',500.00)
+*
+ERROR at line 1:
+ORA-02290: check constraint (HR.SYS_C007555) violated
+
+==========================================================================
+
+clear scr; //to clear screen;
+set linesize 1000; for width
+==========================================================================
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where department_id=50 and job_id='ST_MAN'; 
+//charcter data is case sensitive
+========================================================================
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where department_id=50 or job_id like '%_MAN'; 
+
+//like operator matches any charcter or no character
+//-- opertaor matches single character
+=====================================================================
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where job_id in ('ST_MAN','SA_MAN','PU_MAN'); 
+
+
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where job_id NOT in ('ST_MAN','SA_MAN','PU_MAN'); 
+
+=======================================================
+
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where salary  between 10000 and 20000; 
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where salary not between 10000 and 20000; 
+======================================================
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where salary  between 10000 and 20000
+order by job_id,salary;
+====================================================
+date format in oracle dd-mmm-rr previous century
+date format in oracle dd-mmm-yy current century
+=================================================
+
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where hire_date between '01-JAN-05' and '31-DEC-08'; 
+
+//uppercase, lowercase in date month mmm doesn't make difference
+=================================================
+
+select last_name, salary,commission_pct,hire_date,job_id, department_id
+from employees 
+where hire_date between '01-JAN-05' and '31-DEC-08'
+order by hire_date; 
+
+===========================================
+Group functions
+
+select last_name, upper(last_name),lower(last_name)
+from employees;  //single row applies on every row
+//and provides result for every row value
+
+----------------------//multi row functions
+select sum(salary) from employees;
+
+//ways of giving column alias, as is optional, double quotes can print as it is while other upper case
+
+select sum(salary)  totalsalary,
+max(salary) as maxsalary,
+min(salary) as "Min Salary",
+count(salary) "Total Count",
+avg(salary) AverageSalary
+from employees;
+----------------------------------------------------------
+select count(*) as totalcount from employees;
+
+select avg(commission_pct),count(commission_pct)  from employees;
+
+In ORACLE, NULL means no value,empty, no space neither zero
+All  group functions ignore null values.
+there is solution for this
+nvl gives temporary replacement for null values either zero or empty or space
+---------------
+select avg(nvl(commission_pct,0)),count(nvl(commission_pct,0))  from employees;
+
+output:
+SQL> select avg(commission_pct),count(commission_pct)  from employees;
+
+AVG(COMMISSION_PCT) COUNT(COMMISSION_PCT)
+------------------- ---------------------
+         .222857143                    35
+
+SQL> select avg(nvl(commission_pct,0)),count(nvl(commission_pct,0))  from employees;
+
+AVG(NVL(COMMISSION_PCT,0)) COUNT(NVL(COMMISSION_PCT,0))
+-------------------------- ----------------------------
+                .072897196                          107
+
+===============================================================
+
+
+select department_id,sum(salary)  totalsalary,
+count(salary) "Total Count",
+avg(salary) AverageSalary
+from employees
+group by department_id;
+//group by considers null values in dept_id and group them in one group
+
+
+DEPARTMENT_ID TOTALSALARY Total Count
+------------- ----------- -----------
+          100       51608           6
+           30       24900           6
+ null***             7000           1
+           90       58000           3
+           20       19000           2
+           70       10000           1
+          110       20308           2
+           50      156400          45
+           80      304500          34
+           40        6500           1
+           60       28800           5
+
+DEPARTMENT_ID TOTALSALARY Total Count
+------------- ----------- -----------
+           10        4400           1
+
+
+
+------------------------------
+select last_name,department_id,sum(salary)  totalsalary,
+count(salary) "Total Count",
+avg(salary) AverageSalary
+from employees
+group by department_id;//error
+-------------------
+select department_id,job_id,sum(salary)  totalsalary,
+count(salary) "Total Count",
+avg(salary) AverageSalary
+from employees
+group by department_id,job_id
+order by department_id,job_id;
+-----------------------------
+
+select department_id,job_id,sum(salary)  totalsalary,
+count(salary) "Total Count",
+avg(salary) AverageSalary
+from employees
+where sum(salary)>=50000
+group by department_id,job_id
+//ERROR:  in where clause you can not apply group function
+
+where sum(salary)>=50000
+      *
+ERROR at line 5:
+ORA-00934: group function is not allowed here
+**************Instead use having  
+-------------------------------------------------------
+select department_id,job_id,sum(salary)  totalsalary,
+count(salary) "Total Count",
+avg(salary) AverageSalary
+from employees
+having sum(salary)>=50000
+group by department_id,job_id;
+
+
+//having clause can come before or after group by but order by should be at last.
+========================================
+
+select count(department_id) from employees; //ans=106 + 1 null ignored
+------------------
+select count(distinct department_id) from employees;
+//ans=11 It ignores null
+-----------------
+select count(distinct job_id)
+from employees;
+ans=19
+--------------------------------------------
+		JOINS
+COMBINING DATA FROM MORE THAN ONE TABLE
+============================================
+
+select employees.employee_id,
+employees.last_name,
+employees.department_id,
+departments.department_id,
+departments.department_name
+from employees,departments;
+
+//107* 27=2889 records selected. CARTESIAN PRODUCT
+----//cross join 
+-------------------//standard sql syntax 1999//-----
+select employees.employee_id,
+employees.last_name,
+employees.department_id,
+departments.department_id,
+departments.department_name
+from employees cross join departments;
+----------------------------------------------
+//EQUI join //also known as inner join=> matched records
+----------------------------------------------
+select e.employee_id,
+e.last_name,
+e.department_id,
+d.department_id,
+d.department_name
+from employees e,departments d
+where e.department_id=d.department_id ;
+//ans=106 rows selected because one dept_id is null else there is 107 employees
+
+---//standard syntax of equi join known as inner join
+select e.employee_id,
+e.last_name,
+e.department_id,
+d.department_id,
+d.department_name
+from employees e join departments d
+on e.department_id=d.department_id ;
+------------------
+desc employees;
+
+
+SQL> desc employees;
+ Name                                                  Null?    Type
+ ---------------------------------                     -------- ---------------
+ EMPLOYEE_ID                                           NOT NULL NUMBER(6)
+ FIRST_NAME                                                     VARCHAR2(20)
+ LAST_NAME                                             NOT NULL VARCHAR2(25)
+ EMAIL                                                 NOT NULL VARCHAR2(25)
+ PHONE_NUMBER                                                   VARCHAR2(20)
+ HIRE_DATE                                             NOT NULL DATE
+ JOB_ID                                                NOT NULL VARCHAR2(10)
+ SALARY                                                         NUMBER(8,2)
+ COMMISSION_PCT                                                 NUMBER(2,2)
+ MANAGER_ID                                                     NUMBER(6)
+ DEPARTMENT_ID                                                  NUMBER(4)
+
+desc departments;
+
+SQL> desc departments;
+ Name                                                  Null?    Type
+ ----------------------------------------------------- -------- --------------
+ DEPARTMENT_ID                                         NOT NULL NUMBER(4)
+ DEPARTMENT_NAME                                       NOT NULL VARCHAR2(30)
+ MANAGER_ID                                                     NUMBER(6)
+ LOCATION_ID                                                    NUMBER(4)
+
+
+
+
+------------
+Equi join=> natural join
+====> performs join on common columns between tables
+----> common in -> same column name, same data type, same size;
+-----> Common columns displayed only once.
+---------------
+select * from employees natural join departments;
+//e.dept_id=d.dept_id and e.manager_id=d.manager_id;
+//no need to specify condition
+
+--------------------------------------------------------------------
+select * from employees join departments using(department_id);
+//manager id is displayed twice.
+//Join using clause
+---------------------------------------------------------------------
+//outer join --standard sql
+select e.employee_id,
+e.last_name,
+e.department_id,
+d.department_id,
+d.department_name
+from employees e left outer join departments d
+on e.department_id=d.department_id ;
+------------
+//right outer join
+select e.employee_id,
+e.last_name,
+e.department_id,
+d.department_id,
+d.department_name
+from employees e right outer join departments d
+on e.department_id=d.department_id ;
+-----------------
+//full outer join
+
+select e.employee_id,
+e.last_name,
+e.department_id,
+d.department_id,
+d.department_name
+from employees e full outer join departments d
+on e.department_id=d.department_id ;
+====================================================
+
+//self join;
+select w.employee_id,w.last_name,w.manager_id, m.employee_id,m.last_name
+from employees w join employees m
+on w.manager_id=m.employee_id
+order by w.employee_id;
+---------------------------------------------------------
+//Non equi join +self join
+
+
+select w.employee_id,w.last_name,w.manager_id,w.hire_date, m.employee_id,m.last_name,m.hire_date
+from employees w join employees m
+on w.manager_id=m.employee_id and w.hire_date>m.hire_date
+order by w.employee_id;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
